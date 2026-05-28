@@ -129,32 +129,50 @@ st.html("""
     }
 
     /* ─── TABLE DATA ROWS ─── */
-    .tbl-row {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        padding: 0.9rem 0.6rem;
-        border-bottom: 1px solid var(--color-border-soft);
-        transition: all 0.12s ease;
-        position: relative;
-        background: var(--color-bg-primary);
-        min-height: 2.6rem;
+    /* Target Streamlit horizontal blocks with exactly 12 columns (table rows) */
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) {
+        display: flex !important;
+        align-items: center !important;
+        padding: 0.9rem 0.6rem !important;
+        border-bottom: 1px solid var(--color-border-soft) !important;
+        transition: all 0.12s ease !important;
+        background: var(--color-bg-primary) !important;
+        min-height: 2.6rem !important;
+        flex-wrap: nowrap !important;
     }
     
-    .tbl-row:nth-child(odd) {
-        background: var(--color-bg-primary);
+    /* Alternating row colors - use nth-of-type on the horizontal blocks */
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child):nth-of-type(odd) {
+        background: var(--color-bg-primary) !important;
     }
     
-    .tbl-row:nth-child(even) {
-        background: rgba(248, 249, 250, 0.5);
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child):nth-of-type(even) {
+        background: rgba(248, 249, 250, 0.5) !important;
     }
     
-    .tbl-row:hover {
-        background: var(--color-bg-tertiary);
-        transition: background 0.1s ease;
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child):hover {
+        background: var(--color-bg-tertiary) !important;
+    }
+    
+    /* Ensure columns don't wrap */
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn {
+        flex-shrink: 0 !important;
+        min-width: 0 !important;
     }
 
-    /* ─── CELL STYLES ─── */
+    /* Column width overrides for table rows */
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(1) { flex: 0 0 1.5% !important; max-width: 1.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(2) { flex: 0 0 2.8% !important; max-width: 2.8% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(3) { flex: 0 0 19% !important; max-width: 19% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(4) { flex: 0 0 10% !important; max-width: 10% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(5) { flex: 0 0 8% !important; max-width: 8% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(6) { flex: 0 0 7.5% !important; max-width: 7.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(7) { flex: 0 0 8.5% !important; max-width: 8.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(8) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(9) { flex: 0 0 5.5% !important; max-width: 5.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(10) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(11) { flex: 0 0 7.5% !important; max-width: 7.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(12) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
     .cell-accent {
         width: 2px;
         min-width: 2px;
@@ -163,6 +181,7 @@ st.html("""
         margin-right: 0.6rem;
     }
     
+    .accent-bar { width: 3px; min-width: 3px; border-radius: 0 2px 2px 0; align-self: stretch; margin-right: 0.3rem; }
     .accent-untouched { background: #cbd5e1; }
     .accent-interested { background: #10b981; }
     .accent-followup { background: #f59e0b; }
@@ -707,12 +726,10 @@ page_df = filtered.iloc[start:end]
 header_labels = ["", "#", "Hospital", "Role", "Department", "City", "Salary", "Priority", "Posted", "Contacted", "Response", "Notes"]
 header_ratios = [0.015, 0.028, 0.19, 0.10, 0.08, 0.075, 0.085, 0.065, 0.055, 0.065, 0.075, 0.065]
 
-st.html("<div style='background: var(--color-bg-secondary); border-radius: 6px 6px 0 0; padding: 0.2rem 0; margin-bottom: 0;'>")
 header_cols = st.columns(header_ratios)
 for col, label in zip(header_cols, header_labels):
     with col:
         st.html(f'<div class="tbl-header-cell">{label}</div>')
-st.html("</div>")
 
 # ─── TABLE ROWS ───
 if len(page_df) == 0:
