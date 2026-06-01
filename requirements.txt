@@ -1,5 +1,2 @@
 streamlit
 pandas
-playwright
-beautifulsoup4
-crawl4ai
