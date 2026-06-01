@@ -453,6 +453,61 @@ st.html("""
         text-align: center;
     }
 
+    /* ─── DATA EDITOR CUSTOM STYLES ─── */
+    [data-testid="stDataEditor"] {
+        border-radius: 8px !important;
+        border: 1px solid var(--color-border) !important;
+    }
+
+    /* ─── MOBILE RESPONSIVENESS ─── */
+    @media (max-width: 1024px) {
+        .block-container {
+            padding: 1rem !important;
+        }
+        .app-header {
+            font-size: 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+        .metrics-container {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .metric-value {
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 0.75rem !important;
+        }
+        .app-header {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+        .metrics-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        .metric-card {
+            padding: 0.75rem;
+        }
+        .metric-label {
+            font-size: 0.6rem;
+        }
+        .metric-value {
+            font-size: 1.1rem;
+        }
+        .toolbar-section {
+            padding: 0.6rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .metrics-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
     /* ─── UTILITY ─── */
     footer { visibility: hidden; }
     header { visibility: hidden; }
@@ -567,57 +622,93 @@ def extract_email(text):
     emails = re.findall(r'[\w.-]+@[\w.-]+\.\w+', text)
     return emails[0] if emails else None
 
+def response_badge(status):
+    """Return emoji badge for response status."""
+    if status == "Interested":
+        return "🟢 Interested"
+    elif status == "Follow-up":
+        return "🟡 Follow-up"
+    elif status == "No Response":
+        return "🔴 No Response"
+    elif status == "Not Interested":
+        return "⚪ Not Interested"
+    return ""
+
+# ─── ADD LEAD DIALOG ───
+@st.dialog("➕ Add New Lead", width="large")
+def add_lead_form():
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        new_hospital = st.text_input("Hospital *", placeholder="Apollo Hospital")
+    with c2:
+        new_role = st.text_input("Role *", placeholder="Duty Doctor")
+    with c3:
+        new_dept = st.text_input("Department", placeholder="General / Casualty")
+    c4, c5, c6 = st.columns(3)
+    with c4:
+        new_city = st.text_input("City *", placeholder="Bengaluru")
+    with c5:
+        new_salary = st.text_input("Salary", placeholder="₹50,000 a month")
+    with c6:
+        new_url = st.text_input("Source URL", placeholder="https://indeed.com/...")
+    new_notes = st.text_area("Notes", placeholder="HR contact, phone, requirements...", height=80)
+
+    c_save, c_cancel = st.columns([1, 1])
+    with c_save:
+        if st.button("💾 Save Lead", type="primary", use_container_width=True):
+            if new_hospital and new_role and new_city:
+                df = load_data()
+                new_row = {
+                    "hospital": new_hospital, "role": new_role, "department": new_dept,
+                    "city": new_city, "salary": new_salary,
+                    "contacted": "No", "response_status": "", "recruiter_notes": new_notes,
+                    "source_url": new_url, "date_posted": datetime.now().strftime("%-d %B %Y").lower(),
+                    "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                for col in df.columns:
+                    if col not in new_row:
+                        new_row[col] = ""
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                save_data(df)
+                st.success("Lead added successfully!")
+                st.rerun()
+            else:
+                st.error("Please fill in Hospital, Role, and City.")
+    with c_cancel:
+        if st.button("Cancel", use_container_width=True):
+            st.rerun()
+
+# ─── MAIN APP ───
 df = load_data()
 
 # ─── HEADER ───
 st.html("<div class='app-header'>🏥 Medibrick Outreach Queue</div>")
 
 # ─── METRICS CARDS ───
-col1, col2, col3, col4, col5 = st.columns(5)
+metrics_html = "<div class='metrics-container'>"
 
-with col1:
-    st.html(f"""
-    <div class='metric-card'>
-        <div class='metric-label'>Total Leads</div>
-        <div class='metric-value'>{len(df)}</div>
-    </div>
-    """)
+not_contacted = len(df[df["contacted"] == "No"])
+interested = len(df[df["response_status"] == "Interested"])
+followup = len(df[df["response_status"] == "Follow-up"])
+no_response = len(df[df["response_status"] == "No Response"])
 
-with col2:
-    not_contacted = len(df[df["contacted"] == "No"])
-    st.html(f"""
-    <div class='metric-card'>
-        <div class='metric-label'>Not Contacted</div>
-        <div class='metric-value'>{not_contacted}</div>
-    </div>
-    """)
+metrics = [
+    ("Total Leads", len(df)),
+    ("Not Contacted", not_contacted),
+    ("Interested", interested),
+    ("Follow-up", followup),
+    ("No Response", no_response),
+]
 
-with col3:
-    interested = len(df[df["response_status"] == "Interested"])
-    st.html(f"""
+for label, value in metrics:
+    metrics_html += f"""
     <div class='metric-card'>
-        <div class='metric-label'>Interested</div>
-        <div class='metric-value'>{interested}</div>
+        <div class='metric-label'>{label}</div>
+        <div class='metric-value'>{value}</div>
     </div>
-    """)
-
-with col4:
-    followup = len(df[df["response_status"] == "Follow-up Needed"])
-    st.html(f"""
-    <div class='metric-card'>
-        <div class='metric-label'>Follow-up</div>
-        <div class='metric-value'>{followup}</div>
-    </div>
-    """)
-
-with col5:
-    no_response = len(df[df["response_status"] == "No Response"])
-    st.html(f"""
-    <div class='metric-card'>
-        <div class='metric-label'>No Response</div>
-        <div class='metric-value'>{no_response}</div>
-    </div>
-    """)
+    """
+metrics_html += "</div>"
+st.html(metrics_html)
 
 # Apply quick filter
 filtered = df.copy()
@@ -646,7 +737,7 @@ with tb[4]:
 with tb[5]:
     st.html("<div class='toolbar-label'>&nbsp;</div>")
     if st.button("➕", key="add_lead_btn", use_container_width=True, help="Add new lead"):
-        st.session_state.show_add_lead = True
+        add_lead_form()
 with tb[6]:
     st.html("<div class='toolbar-label'>&nbsp;</div>")
     if st.button("↻", key="refresh", help="Refresh data"):
@@ -676,46 +767,6 @@ elif sort_by == "Salary ↓":
 elif sort_by == "Salary ↑":
     filtered = filtered.assign(__s=filtered["salary"].apply(salary_num)).sort_values("__s", ascending=True).drop("__s", axis=1)
 
-# ─── ADD LEAD FORM ───
-if st.session_state.get("show_add_lead", False):
-    with st.form("add_lead_form"):
-        st.subheader("➕ Add New Lead")
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            new_hospital = st.text_input("Hospital *", placeholder="Apollo Hospital")
-        with c2:
-            new_role = st.text_input("Role *", placeholder="Duty Doctor")
-        with c3:
-            new_dept = st.text_input("Department", placeholder="General / Casualty")
-        c4, c5, c6 = st.columns(3)
-        with c4:
-            new_city = st.text_input("City *", placeholder="Bengaluru")
-        with c5:
-            new_salary = st.text_input("Salary", placeholder="₹50,000 a month")
-        with c6:
-            new_url = st.text_input("Source URL", placeholder="https://indeed.com/...")
-        new_notes = st.text_area("Notes", placeholder="HR contact, phone, requirements...", height=60)
-        submitted = st.form_submit_button("💾 Save Lead")
-        cancelled = st.form_submit_button("Cancel")
-        if submitted and new_hospital and new_role and new_city:
-            new_row = {
-                "hospital": new_hospital, "role": new_role, "department": new_dept,
-                "city": new_city, "salary": new_salary,
-                "contacted": "No", "response_status": "", "recruiter_notes": new_notes,
-                "source_url": new_url, "date_posted": datetime.now().strftime("%-d %B %Y").lower(),
-                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            for col in df.columns:
-                if col not in new_row: new_row[col] = ""
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            save_data(df)
-            st.toast("Lead added", icon="✅")
-            st.session_state.show_add_lead = False
-            st.rerun()
-        if cancelled:
-            st.session_state.show_add_lead = False
-            st.rerun()
-
 # ─── PAGINATION STATE ───
 ROWS_PER_PAGE = 14
 total_pages = math.ceil(len(filtered) / ROWS_PER_PAGE)
@@ -725,9 +776,10 @@ if "page_num" not in st.session_state:
     st.session_state.page_num = 1
 
 # Reset to page 1 when filters change
-if st.session_state.get("_last_filter_hash") != hash((search, city_filter, status_filter, response_filter, sort_by)):
+filter_hash = hash((search, city_filter, status_filter, response_filter, sort_by))
+if st.session_state.get("_last_filter_hash") != filter_hash:
     st.session_state.page_num = 1
-    st.session_state._last_filter_hash = hash((search, city_filter, status_filter, response_filter, sort_by))
+    st.session_state._last_filter_hash = filter_hash
 
 if st.session_state.page_num > total_pages:
     st.session_state.page_num = total_pages
@@ -737,18 +789,9 @@ if st.session_state.page_num < 1:
 page = st.session_state.page_num
 start = (page - 1) * ROWS_PER_PAGE
 end = start + ROWS_PER_PAGE
-page_df = filtered.iloc[start:end]
+page_df = filtered.iloc[start:end].copy()
 
-# ─── TABLE HEADER ───
-header_labels = ["", "#", "Hospital", "Role", "Department", "City", "Salary", "Posted", "Contacted", "Response", "Notes"]
-header_ratios = [0.015, 0.028, 0.19, 0.10, 0.08, 0.075, 0.085, 0.065, 0.065, 0.075, 0.065]
-
-header_cols = st.columns(header_ratios)
-for col, label in zip(header_cols, header_labels):
-    with col:
-        st.html(f'<div class="tbl-header-cell">{label}</div>')
-
-# ─── TABLE ROWS ───
+# ─── TABLE ───
 if len(page_df) == 0:
     st.html("""
     <div class="empty-state">
@@ -758,112 +801,63 @@ if len(page_df) == 0:
     </div>
     """)
 else:
-    for idx, row in page_df.iterrows():
-        original_idx = idx
-        is_last = idx == page_df.index[-1]
-        row_num = start + list(page_df.index).index(idx) + 1
+    # Prepare display dataframe for data_editor
+    display_cols = ["hospital", "role", "department", "city", "salary", "date_posted", "contacted", "response_status", "recruiter_notes", "source_url"]
+    display_df = page_df[display_cols].copy()
 
-        response = row.get("response_status", "")
-        contacted = row.get("contacted", "No")
+    # Format salary for display
+    display_df["salary"] = display_df["salary"].apply(abbreviate_salary)
 
-        if response == "Interested": accent_class = "accent-interested"
-        elif response == "Follow-up Needed": accent_class = "accent-followup"
-        elif response == "No Response": accent_class = "accent-noresponse"
-        elif response == "Not Interested": accent_class = "accent-notinterested"
-        else: accent_class = "accent-untouched"
+    # Format date for display
+    display_df["date_posted"] = display_df["date_posted"].apply(relative_date)
 
-        hospital = row.get("hospital", "").strip() or "Unknown Hospital"
-        source_url = row.get("source_url", "").strip()
-        updated = relative_time(row.get("last_updated", ""))
-        updated_html = f'<span class="cell-updated">({updated})</span>' if updated else ""
-        role = row.get("role", "").strip() or "—"
-        dept = row.get("department", "").strip() or "—"
-        city = row.get("city", "").strip() or "—"
-        salary = abbreviate_salary(row.get("salary", "").strip())
-        date_posted = relative_date(row.get("date_posted", ""))
-        date_fresh = "cell-date-fresh" if date_posted == "Today" else ""
+    # Add status badge column
+    display_df.insert(0, "Status", page_df["response_status"].apply(response_badge))
 
-        ca, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns(header_ratios)
+    column_config = {
+        "Status": st.column_config.TextColumn("", width="small", disabled=True),
+        "hospital": st.column_config.TextColumn("Hospital", width="large"),
+        "role": st.column_config.TextColumn("Role", width="medium"),
+        "department": st.column_config.TextColumn("Dept", width="small"),
+        "city": st.column_config.TextColumn("City", width="small"),
+        "salary": st.column_config.TextColumn("Salary", width="small", disabled=True),
+        "date_posted": st.column_config.TextColumn("Posted", width="small", disabled=True),
+        "contacted": st.column_config.SelectboxColumn("Contacted", options=["No", "Yes"], width="small"),
+        "response_status": st.column_config.SelectboxColumn(
+            "Response",
+            options=["", "Interested", "Follow-up", "No Response", "Not Interested"],
+            width="medium"
+        ),
+        "recruiter_notes": st.column_config.TextColumn("Notes", width="large"),
+        "source_url": st.column_config.LinkColumn("Source", width="small", display_text="🔗"),
+    }
 
-        with ca:
-            st.html(f'<div class="accent-bar {accent_class}"></div>')
+    # Use a session-state key for the data editor so we can detect changes
+    editor_key = f"editor_page_{page}"
 
-        with c0:
-            st.html(f'<div class="cell-idx">{row_num}</div>')
+    edited_df = st.data_editor(
+        display_df,
+        column_config=column_config,
+        hide_index=True,
+        use_container_width=True,
+        num_rows="fixed",
+        key=editor_key,
+    )
 
-        with c1:
-            st.html(f"<div class='cell-hospital'><a href='{source_url}' target='_blank'>{hospital}<span class='link-icon'>↗</span></a>{updated_html}</div>")
-
-        with c2:
-            st.html(f"<div class='cell-role'>{role}</div>")
-
-        with c3:
-            st.html(f"<div class='cell-dept'>{dept}</div>")
-
-        with c4:
-            st.html(f"<div class='cell-city'>{city}</div>")
-
-        with c5:
-            st.html(f"<div class='cell-salary'>{salary}</div>")
-
-        with c6:
-            st.html(f"<div class='cell-date {date_fresh}'>{date_posted}</div>")
-
-        with c7:
-            cur_c = row.get("contacted", "No")
-            new_c = st.selectbox("Contacted", ["No", "Yes"], index=0 if cur_c == "No" else 1, key=f"c_{original_idx}", label_visibility="collapsed")
-            if new_c != cur_c:
-                df.loc[original_idx, "contacted"] = new_c
-                df.loc[original_idx, "last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                save_data(df)
-                st.toast("Updated", icon="✅")
-                st.rerun()
-
-        with c8:
-            cur_r = row.get("response_status", "")
-            opts_r = ["", "Interested", "Follow-up", "No Response", "Not Interested"]
-            idx_r = opts_r.index(cur_r) if cur_r in opts_r else 0
-            new_r = st.selectbox("Response", opts_r, index=idx_r, key=f"r_{original_idx}", label_visibility="collapsed")
-            if new_r != cur_r:
-                df.loc[original_idx, "response_status"] = new_r
-                df.loc[original_idx, "last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                save_data(df)
-                st.toast("Updated", icon="✅")
-                st.rerun()
-
-        with c9:
-            notes = str(row.get("recruiter_notes", "")).replace("nan", "")
-            has_notes = bool(notes.strip())
-            preview = notes[:24] + "…" if len(notes) > 24 else notes if has_notes else ""
-            popover_label = f"📝 {preview}" if preview else "📝"
-            
-            with st.popover(popover_label, use_container_width=False):
-                st.markdown(f"### {hospital}")
-                new_n = st.text_area("Notes", value=notes, placeholder="HR contact, requirements, call times...", height=100, key=f"np_{original_idx}")
-                
-                phone = extract_phone(new_n if new_n else notes)
-                email = extract_email(new_n if new_n else notes)
-                
-                if phone or email:
-                    st.markdown("---")
-                    if phone:
-                        st.code(phone, language=None)
-                        if st.button("📋 Copy Phone", key=f"cp_{original_idx}", use_container_width=True):
-                            st.toast(f"Copied {phone}", icon="📋")
-                    if email:
-                        st.code(email, language=None)
-                        if st.button("📋 Copy Email", key=f"ce_{original_idx}", use_container_width=True):
-                            st.toast(f"Copied {email}", icon="📋")
-                
-                if st.button("💾 Save Notes", key=f"ns_{original_idx}", use_container_width=True, type="primary"):
-                    df.loc[original_idx, "recruiter_notes"] = new_n
+    # Auto-save changes
+    if edited_df is not None and not edited_df.equals(display_df):
+        changed = False
+        for idx in edited_df.index:
+            original_idx = page_df.index[idx]
+            for col in ["contacted", "response_status", "recruiter_notes"]:
+                if edited_df.loc[idx, col] != display_df.loc[idx, col]:
+                    df.loc[original_idx, col] = edited_df.loc[idx, col]
                     df.loc[original_idx, "last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    save_data(df)
-                    st.toast("Notes saved", icon="✅")
-                    st.rerun()
-
-        if not is_last:
-            st.html("<hr style='margin:0.1rem 0; border-color:var(--color-border-soft);'>")
+                    changed = True
+        if changed:
+            save_data(df)
+            st.toast("Changes saved!", icon="💾")
+            st.rerun()
 
 # ─── BOTTOM PAGINATION ───
 if len(filtered) > 0:
@@ -884,6 +878,17 @@ if len(filtered) > 0:
 
 # ─── EXPORT ───
 st.markdown("")  # spacing
-today_str = datetime.now().strftime("%Y%m%d")
-csv_data = df.to_csv(index=False).encode("utf-8")
-st.download_button("📥 Export CSV", csv_data, f"medibrick_{today_str}.csv", "text/csv", use_container_width=False)
+export_col1, export_col2 = st.columns([1, 0.3])
+with export_col1:
+    st.caption(f"Showing {len(filtered)} of {len(df)} leads")
+with export_col2:
+    today_str = datetime.now().strftime("%Y%m%d")
+    # Export filtered data
+    csv_data = filtered.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        f"📥 Export ({len(filtered)})",
+        csv_data,
+        f"medibrick_{today_str}.csv",
+        "text/csv",
+        use_container_width=True,
+    )
