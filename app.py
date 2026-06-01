@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import math
+import os
 import re
 from datetime import datetime, timedelta
 
@@ -129,8 +130,8 @@ st.html("""
     }
 
     /* ─── TABLE DATA ROWS ─── */
-    /* Target Streamlit horizontal blocks with exactly 12 columns (table rows) */
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) {
+    /* Target Streamlit horizontal blocks with exactly 11 columns (table rows) */
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) {
         display: flex !important;
         align-items: center !important;
         padding: 0.9rem 0.6rem !important;
@@ -142,37 +143,36 @@ st.html("""
     }
     
     /* Alternating row colors - use nth-of-type on the horizontal blocks */
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child):nth-of-type(odd) {
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child):nth-of-type(odd) {
         background: var(--color-bg-primary) !important;
     }
     
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child):nth-of-type(even) {
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child):nth-of-type(even) {
         background: rgba(248, 249, 250, 0.5) !important;
     }
     
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child):hover {
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child):hover {
         background: var(--color-bg-tertiary) !important;
     }
     
     /* Ensure columns don't wrap */
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn {
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn {
         flex-shrink: 0 !important;
         min-width: 0 !important;
     }
 
     /* Column width overrides for table rows */
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(1) { flex: 0 0 1.5% !important; max-width: 1.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(2) { flex: 0 0 2.8% !important; max-width: 2.8% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(3) { flex: 0 0 19% !important; max-width: 19% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(4) { flex: 0 0 10% !important; max-width: 10% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(5) { flex: 0 0 8% !important; max-width: 8% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(6) { flex: 0 0 7.5% !important; max-width: 7.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(7) { flex: 0 0 8.5% !important; max-width: 8.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(8) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(9) { flex: 0 0 5.5% !important; max-width: 5.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(10) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(11) { flex: 0 0 7.5% !important; max-width: 7.5% !important; }
-    .stHorizontalBlock:has(> .stColumn:nth-child(12):last-child) > .stColumn:nth-child(12) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(1) { flex: 0 0 1.5% !important; max-width: 1.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(2) { flex: 0 0 2.8% !important; max-width: 2.8% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(3) { flex: 0 0 19% !important; max-width: 19% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(4) { flex: 0 0 10% !important; max-width: 10% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(5) { flex: 0 0 8% !important; max-width: 8% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(6) { flex: 0 0 7.5% !important; max-width: 7.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(7) { flex: 0 0 8.5% !important; max-width: 8.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(8) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(9) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(10) { flex: 0 0 7.5% !important; max-width: 7.5% !important; }
+    .stHorizontalBlock:has(> .stColumn:nth-child(11):last-child) > .stColumn:nth-child(11) { flex: 0 0 6.5% !important; max-width: 6.5% !important; }
     .cell-accent {
         width: 2px;
         min-width: 2px;
@@ -464,6 +464,8 @@ st.html("""
 # ─── DATA ───
 
 def load_data():
+    if not os.path.exists("daily_leads.csv") or os.path.getsize("daily_leads.csv") == 0:
+        return pd.DataFrame(columns=["hospital", "role", "department", "city", "salary", "hiring_type", "phone", "email", "contact", "notes", "date_posted", "source_url", "contacted", "response_status", "recruiter_notes", "last_updated"])
     df = pd.read_csv("daily_leads.csv", dtype=str, keep_default_na=False)
     for col, default in [("contacted", "No"), ("response_status", ""), ("recruiter_notes", "")]:
         if col not in df.columns:
@@ -471,9 +473,12 @@ def load_data():
         else:
             df[col] = df[col].astype(str).replace("nan", "")
     if "date_posted" not in df.columns:
-        df["date_posted"] = datetime.now().strftime("%Y-%m-%d")
+        df["date_posted"] = datetime.now().strftime("%-d %B %Y").lower()
     if "last_updated" not in df.columns:
         df["last_updated"] = ""
+    # Drop legacy priority column if present
+    if "priority" in df.columns:
+        df = df.drop(columns=["priority"])
     return df
 
 def save_data(df):
@@ -506,6 +511,20 @@ def relative_date(date_str):
         else: return f"{delta.days // 7}w ago"
     except:
         return date_str
+
+def parse_date_for_sort(date_str):
+    """Parse date_posted string to datetime for sorting."""
+    if not date_str or date_str == "nan" or date_str == "":
+        return datetime.min
+    try:
+        # Try new format first: "1 june 2026"
+        return datetime.strptime(date_str, "%d %B %Y")
+    except ValueError:
+        try:
+            # Fallback to old format: "2026-06-01"
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            return datetime.min
 
 def abbreviate_salary(s):
     if not s or s == "—":
@@ -623,7 +642,7 @@ with tb[3]:
     response_filter = st.selectbox("Response", response_opts, index=0, label_visibility="collapsed", key="response")
 with tb[4]:
     st.html("<div class='toolbar-label'>Sort</div>")
-    sort_by = st.selectbox("Sort", ["Date ↓", "Date ↑", "Salary ↓", "Salary ↑", "Priority"], index=0, label_visibility="collapsed", key="sort")
+    sort_by = st.selectbox("Sort", ["Date ↓", "Date ↑", "Salary ↓", "Salary ↑"], index=0, label_visibility="collapsed", key="sort")
 with tb[5]:
     st.html("<div class='toolbar-label'>&nbsp;</div>")
     if st.button("➕", key="add_lead_btn", use_container_width=True, help="Add new lead"):
@@ -649,15 +668,13 @@ def salary_num(s):
     return max((int(n.replace(",", "")) for n in nums), default=0) if nums else 0
 
 if sort_by == "Date ↓":
-    filtered = filtered.sort_values("date_posted", ascending=False)
+    filtered = filtered.assign(__d=filtered["date_posted"].apply(parse_date_for_sort)).sort_values("__d", ascending=False).drop("__d", axis=1)
 elif sort_by == "Date ↑":
-    filtered = filtered.sort_values("date_posted", ascending=True)
+    filtered = filtered.assign(__d=filtered["date_posted"].apply(parse_date_for_sort)).sort_values("__d", ascending=True).drop("__d", axis=1)
 elif sort_by == "Salary ↓":
     filtered = filtered.assign(__s=filtered["salary"].apply(salary_num)).sort_values("__s", ascending=False).drop("__s", axis=1)
 elif sort_by == "Salary ↑":
     filtered = filtered.assign(__s=filtered["salary"].apply(salary_num)).sort_values("__s", ascending=True).drop("__s", axis=1)
-elif sort_by == "Priority":
-    filtered = filtered.assign(__p=filtered["priority"].map({"HIGH": 0, "MEDIUM": 1, "LOW": 2}).fillna(3)).sort_values("__p").drop("__p", axis=1)
 
 # ─── ADD LEAD FORM ───
 if st.session_state.get("show_add_lead", False):
@@ -683,9 +700,9 @@ if st.session_state.get("show_add_lead", False):
         if submitted and new_hospital and new_role and new_city:
             new_row = {
                 "hospital": new_hospital, "role": new_role, "department": new_dept,
-                "city": new_city, "salary": new_salary, "priority": "MEDIUM",
+                "city": new_city, "salary": new_salary,
                 "contacted": "No", "response_status": "", "recruiter_notes": new_notes,
-                "source_url": new_url, "date_posted": datetime.now().strftime("%Y-%m-%d"),
+                "source_url": new_url, "date_posted": datetime.now().strftime("%-d %B %Y").lower(),
                 "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
             for col in df.columns:
@@ -723,8 +740,8 @@ end = start + ROWS_PER_PAGE
 page_df = filtered.iloc[start:end]
 
 # ─── TABLE HEADER ───
-header_labels = ["", "#", "Hospital", "Role", "Department", "City", "Salary", "Priority", "Posted", "Contacted", "Response", "Notes"]
-header_ratios = [0.015, 0.028, 0.19, 0.10, 0.08, 0.075, 0.085, 0.065, 0.055, 0.065, 0.075, 0.065]
+header_labels = ["", "#", "Hospital", "Role", "Department", "City", "Salary", "Posted", "Contacted", "Response", "Notes"]
+header_ratios = [0.015, 0.028, 0.19, 0.10, 0.08, 0.075, 0.085, 0.065, 0.065, 0.075, 0.065]
 
 header_cols = st.columns(header_ratios)
 for col, label in zip(header_cols, header_labels):
@@ -763,12 +780,10 @@ else:
         dept = row.get("department", "").strip() or "—"
         city = row.get("city", "").strip() or "—"
         salary = abbreviate_salary(row.get("salary", "").strip())
-        priority = row.get("priority", "").strip() or "LOW"
-        chip_class = {"HIGH": "chip-high", "MEDIUM": "chip-medium", "LOW": "chip-low"}.get(priority, "chip-low")
         date_posted = relative_date(row.get("date_posted", ""))
         date_fresh = "cell-date-fresh" if date_posted == "Today" else ""
 
-        ca, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10 = st.columns(header_ratios)
+        ca, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns(header_ratios)
 
         with ca:
             st.html(f'<div class="accent-bar {accent_class}"></div>')
@@ -792,12 +807,9 @@ else:
             st.html(f"<div class='cell-salary'>{salary}</div>")
 
         with c6:
-            st.html(f"<span class='chip {chip_class}'>● {priority}</span>")
-
-        with c7:
             st.html(f"<div class='cell-date {date_fresh}'>{date_posted}</div>")
 
-        with c8:
+        with c7:
             cur_c = row.get("contacted", "No")
             new_c = st.selectbox("Contacted", ["No", "Yes"], index=0 if cur_c == "No" else 1, key=f"c_{original_idx}", label_visibility="collapsed")
             if new_c != cur_c:
@@ -807,7 +819,7 @@ else:
                 st.toast("Updated", icon="✅")
                 st.rerun()
 
-        with c9:
+        with c8:
             cur_r = row.get("response_status", "")
             opts_r = ["", "Interested", "Follow-up", "No Response", "Not Interested"]
             idx_r = opts_r.index(cur_r) if cur_r in opts_r else 0
@@ -819,7 +831,7 @@ else:
                 st.toast("Updated", icon="✅")
                 st.rerun()
 
-        with c10:
+        with c9:
             notes = str(row.get("recruiter_notes", "")).replace("nan", "")
             has_notes = bool(notes.strip())
             preview = notes[:24] + "…" if len(notes) > 24 else notes if has_notes else ""

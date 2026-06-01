@@ -1,6 +1,12 @@
-https://in.indeed.com/jobs?q=duty+doctor+bangalore
+https://in.indeed.com/jobs?q=duty+doctor
 https://in.indeed.com/jobs?q=bams+doctor
+https://in.indeed.com/jobs?q=locum
 https://in.indeed.com/jobs?q=resident+medical+officer
 https://careers.manipalhospitals.com/job-openings/
-https://www.apollohospitals.com/careers/
-https://www.fortishealthcare.com/careers
+https://jobs.docthub.com/all-jobs?job_type[]=locum&job_type[]=temporary&job_type[]=contract
+https://www.drlogy.com/jobs?job_type=Temporary&job_type=Contract&job_type=Walk+In
+https://www.foundit.in/srp/results?query=locum+doctor&locations=India
+https://naukriapollo.hire.trakstar.com/jobs
+https://fortishealthcare.hire.trakstar.com/jobs
+https://www.jobhai.com/max-healthcare-jobs-cmp
+

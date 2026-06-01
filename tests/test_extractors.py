@@ -1,5 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 import sys
 import os
 
@@ -45,11 +46,9 @@ class TestIsGoodText:
         assert is_good_text(text) is False
 
     def test_allows_text_with_substring_match_in_words(self):
-        # "cookie" should not match "cookies" in a job description
+        # "cookie settings" should not match "cookies" in a job description
         text = "We provide cookies for patients at our hospital"
-        # Actually, this WILL be blocked because "cookie" is in "cookies"
-        # This is a known limitation - let's verify behavior
-        assert is_good_text(text) is False
+        assert is_good_text(text) is True
 
 
 class TestExtractSalary:
@@ -117,8 +116,21 @@ class TestExtractDatePosted:
         assert extract_date_posted(text) == ""
 
     def test_parses_days_ago(self):
+        expected = (datetime.now() - timedelta(days=4)).strftime("%-d %B %Y").lower()
         result = extract_date_posted("", date_text="4 days ago")
-        assert result.endswith("-04") or result != ""
+        assert result == expected
+
+    def test_parses_today(self):
+        expected = datetime.now().strftime("%-d %B %Y").lower()
+        assert extract_date_posted("", date_text="today") == expected
+
+    def test_parses_just_posted(self):
+        expected = datetime.now().strftime("%-d %B %Y").lower()
+        assert extract_date_posted("", date_text="just posted") == expected
+
+    def test_parses_30_plus_days_ago(self):
+        expected = (datetime.now() - timedelta(days=30)).strftime("%-d %B %Y").lower()
+        assert extract_date_posted("", date_text="30+ days ago") == expected
 
 
 class TestExtractJobUrl:

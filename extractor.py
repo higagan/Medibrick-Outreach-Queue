@@ -7,6 +7,15 @@ import re
 from datetime import datetime, timedelta
 
 
+def format_date_display(date_obj):
+    """Format a date as day month year, e.g. 1 june 2026."""
+    month_names = [
+        "", "january", "february", "march", "april", "may", "june",
+        "july", "august", "september", "october", "november", "december"
+    ]
+    return f"{date_obj.day} {month_names[date_obj.month]} {date_obj.year}"
+
+
 def extract_hospital_name(text, source_url=""):
     """Extract hospital name from job text or source URL."""
     # Pattern: "Easily apply <HOSPITAL NAME> <City>"
@@ -358,65 +367,66 @@ def extract_date_posted(text, date_text=""):
     """Extract relative posting date from job text or explicit date text."""
     text_lower = text.lower()
     today = datetime.now()
-    
-    # Use explicit date text if provided (from scraper HTML element)
-    if date_text:
-        date_lower = date_text.lower()
-        # Pattern: "X days ago"
-        match = re.search(r'(\d+)\s+day[s]?\s+ago', date_lower)
-        if match:
-            days = int(match.group(1))
-            return (today - timedelta(days=days)).strftime("%Y-%m-%d")
-        # Pattern: "X hours ago" -> today
-        match = re.search(r'(\d+)\s+hour[s]?\s+ago', date_lower)
-        if match:
-            return today.strftime("%Y-%m-%d")
-        # Pattern: "Today"
-        if "today" in date_lower:
-            return today.strftime("%Y-%m-%d")
-        # Pattern: "Just posted"
-        if "just posted" in date_lower:
-            return today.strftime("%Y-%m-%d")
-        # Pattern: "Posted X days ago"
-        match = re.search(r'posted\s+(\d+)\s+day[s]?\s+ago', date_lower)
-        if match:
-            days = int(match.group(1))
-            return (today - timedelta(days=days)).strftime("%Y-%m-%d")
-    
-    # Fallback: search in full text
-    # Pattern: "X days ago"
-    match = re.search(r'(\d+)\s+day[s]?\s+ago', text_lower)
-    if match:
-        days = int(match.group(1))
-        return (today - timedelta(days=days)).strftime("%Y-%m-%d")
-    
-    # Pattern: "X hours ago" -> today
-    match = re.search(r'(\d+)\s+hour[s]?\s+ago', text_lower)
-    if match:
-        return today.strftime("%Y-%m-%d")
-    
-    # Pattern: "Today"
-    if "today" in text_lower:
-        return today.strftime("%Y-%m-%d")
-    
-    # Pattern: "Just posted"
-    if "just posted" in text_lower:
-        return today.strftime("%Y-%m-%d")
-    
-    # Pattern: "X months ago"
-    match = re.search(r'(\d+)\s+month[s]?\s+ago', text_lower)
-    if match:
-        months = int(match.group(1))
+
+    def normalize_date(days=0):
+        return format_date_display(today - timedelta(days=days))
+
+    def normalize_months(months=0):
         month = today.month - months
         year = today.year
         while month <= 0:
             month += 12
             year -= 1
         try:
-            return today.replace(year=year, month=month).strftime("%Y-%m-%d")
+            return format_date_display(today.replace(year=year, month=month))
         except:
-            return today.strftime("%Y-%m-%d")
+            return normalize_date(0)
     
+    # Use explicit date text if provided (from scraper HTML element)
+    if date_text:
+        date_lower = date_text.lower()
+        # Pattern: "X days ago" or "X+ days ago"
+        match = re.search(r'(\d+)\+?\s+day[s]?\s+ago', date_lower)
+        if match:
+            days = int(match.group(1))
+            return normalize_date(days=days)
+        # Pattern: "X hours ago" -> today
+        if re.search(r'\d+\s+hour[s]?\s+ago', date_lower):
+            return normalize_date(0)
+        # Pattern: "Today"
+        if "today" in date_lower:
+            return normalize_date(0)
+        # Pattern: "Just posted"
+        if "just posted" in date_lower:
+            return normalize_date(0)
+        # Pattern: "Posted X days ago" or "Posted X+ days ago"
+        match = re.search(r'posted\s+(\d+)\+?\s+day[s]?\s+ago', date_lower)
+        if match:
+            days = int(match.group(1))
+            return normalize_date(days=days)
+        # Pattern: "X months ago"
+        match = re.search(r'(\d+)\s+month[s]?\s+ago', date_lower)
+        if match:
+            months = int(match.group(1))
+            return normalize_months(months=months)
+        return ""
+    
+    # Fallback: search in full text
+    match = re.search(r'(\d+)\+?\s+day[s]?\s+ago', text_lower)
+    if match:
+        days = int(match.group(1))
+        return normalize_date(days=days)
+    if re.search(r'\d+\s+hour[s]?\s+ago', text_lower):
+        return normalize_date(0)
+    if "today" in text_lower:
+        return normalize_date(0)
+    if "just posted" in text_lower:
+        return normalize_date(0)
+    match = re.search(r'(\d+)\s+month[s]?\s+ago', text_lower)
+    if match:
+        months = int(match.group(1))
+        return normalize_months(months=months)
+
     return ""
 
 
@@ -469,27 +479,28 @@ def calculate_priority(text, has_contact=False):
         return "LOW"
 
 
-def enrich_lead(lead_text, source_url="", date_text=""):
+def enrich_lead(lead_text, source_url="", date_text="", pre_hospital="", pre_city="", pre_salary="", pre_hiring_type="", pre_role=""):
     """
     Main enrichment function.
     Takes raw lead text and returns structured dictionary.
+    If pre-extracted fields are provided (from structured HTML scraping),
+    they are used directly; otherwise falls back to regex extraction.
     """
     text = lead_text.strip()
     
-    hospital = extract_hospital_name(text, source_url)
-    role = extract_role(text)
+    # Use pre-extracted structured fields when available
+    hospital = pre_hospital or extract_hospital_name(text, source_url)
+    role = pre_role or extract_role(text)
     department = extract_department(text)
-    city = extract_city(text)
-    salary = extract_salary(text)
-    hiring_type = extract_hiring_type(text)
+    city = pre_city or extract_city(text)
+    salary = pre_salary or extract_salary(text)
+    hiring_type = pre_hiring_type or extract_hiring_type(text)
     phone = extract_phone(text)
     email = extract_email(text)
     contact = extract_contact_person(text)
     hr_clue = extract_hr_clue(text)
     notes = extract_notes(text)
     
-    has_contact = bool(phone or email or contact)
-    priority = calculate_priority(text, has_contact)
     date_posted = extract_date_posted(text, date_text=date_text)
     
     # Build contact recommendation
@@ -521,7 +532,6 @@ def enrich_lead(lead_text, source_url="", date_text=""):
         "email": email,
         "contact": contact,
         "notes": final_notes,
-        "priority": priority,
         "date_posted": date_posted,
         "source_url": source_url
     }
@@ -538,8 +548,7 @@ def format_lead_card(lead_dict):
 📞 {lead_dict['phone'] or ''}
 📧 {lead_dict['email'] or ''}
 👤 {lead_dict['contact']}
-📝 {lead_dict['notes']}
-🔥 {lead_dict['priority']}"""
+📝 {lead_dict['notes']}"""
 
 
 if __name__ == "__main__":
