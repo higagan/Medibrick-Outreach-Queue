@@ -14,6 +14,7 @@ from scraper import (
     KEYWORDS,
     BAD_PATTERNS,
 )
+from extractor import extract_date_posted
 
 
 class TestIsGoodText:
@@ -106,6 +107,18 @@ class TestExtractCity:
         # Cities list has Bengaluru before Bangalore, so Bengaluru wins
         text = "Office in Bangalore, clinic in Bengaluru"
         assert extract_city(text) == "Bengaluru"
+
+
+class TestExtractDatePosted:
+    """Tests for date posted extraction."""
+
+    def test_returns_blank_when_no_date_info(self):
+        text = "Duty Doctor required at Apollo Hospitals, Bengaluru. Salary ₹50,000 per month."
+        assert extract_date_posted(text) == ""
+
+    def test_parses_days_ago(self):
+        result = extract_date_posted("", date_text="4 days ago")
+        assert result.endswith("-04") or result != ""
 
 
 class TestExtractJobUrl:

@@ -417,7 +417,7 @@ def extract_date_posted(text, date_text=""):
         except:
             return today.strftime("%Y-%m-%d")
     
-    return today.strftime("%Y-%m-%d")
+    return ""
 
 
 def calculate_priority(text, has_contact=False):
