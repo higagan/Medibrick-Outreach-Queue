@@ -10,6 +10,15 @@ from extractor import enrich_lead
 with open("urls.txt", "r") as f:
     URLS = [line.strip() for line in f if line.strip()]
 
+# JS-heavy sites that need Playwright
+JS_SITES = [
+    "docthub.com",
+    "drlogy.com", 
+    "foundit.in",
+    "trakstar.com",
+    "jobhai.com"
+]
+
 KEYWORDS = [
     "doctor",
     "duty doctor",
@@ -840,6 +849,14 @@ async def main():
             print(f"\nChecking: {url}")
 
             try:
+                # Check if this is a JS-heavy site
+                is_js_site = any(js_site in url for js_site in JS_SITES)
+                
+                if is_js_site:
+                    # Skip Crawl4AI for JS sites - we'll handle them with Playwright later
+                    print(f"[SKIP] JS site - will use Playwright: {url}")
+                    continue
+                
                 result = await crawler.arun(url=url)
 
                 html = result.html
@@ -851,24 +868,6 @@ async def main():
                     job_ages = extract_job_ages_from_html(html)
                     indeed_jobs = extract_indeed_jobs(soup, url, seen_jks, job_ages)
                     results.extend(indeed_jobs)
-                elif "docthub.com" in url:
-                    docthub_jobs = extract_docthub_jobs(soup, url, seen_jks)
-                    results.extend(docthub_jobs)
-                elif "drlogy.com" in url:
-                    drlogy_jobs = extract_drlogy_jobs(soup, url, seen_jks)
-                    results.extend(drlogy_jobs)
-                elif "foundit.in" in url:
-                    foundit_jobs = extract_foundit_jobs(soup, url, seen_jks)
-                    results.extend(foundit_jobs)
-                elif "locumdoctors.co.in" in url:
-                    locum_jobs = extract_locumdoctors_jobs(soup, url, seen_jks)
-                    results.extend(locum_jobs)
-                elif "trakstar.com" in url:
-                    trakstar_jobs = extract_trakstar_jobs(soup, url, seen_jks)
-                    results.extend(trakstar_jobs)
-                elif "jobhai.com" in url:
-                    jobhai_jobs = extract_jobhai_jobs(soup, url, seen_jks)
-                    results.extend(jobhai_jobs)
                 else:
                     # For other sites, fall back to div-based scraping
                     job_elements = soup.find_all("div")
@@ -905,6 +904,18 @@ async def main():
             except Exception as e:
                 print(f"Error for {url}: {e}")
 
+    # After Crawl4AI, run Playwright for JS-heavy sites
+    js_urls = [u for u in URLS if any(js in u for js in JS_SITES)]
+    if js_urls:
+        print("\n[PLAYWRIGHT] Starting JS site scraping...")
+        try:
+            from playwright_scraper import scrape_js_sites
+            js_jobs = await scrape_js_sites(js_urls)
+            results.extend(js_jobs)
+            print(f"[PLAYWRIGHT] Added {len(js_jobs)} jobs from JS sites")
+        except Exception as e:
+            print(f"[PLAYWRIGHT] Error: {e}")
+
     # Create dataframe
     df = pd.DataFrame(results)
 
@@ -923,4 +934,5 @@ async def main():
     print(f"\nSaved {len(df)} cleaned leads to daily_leads.csv")
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

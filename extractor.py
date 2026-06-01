@@ -23,6 +23,15 @@ def extract_hospital_name(text, source_url=""):
     if match:
         return match.group(1).strip()
     
+    # DoctHub pattern: "Full Time <Hospital Name>, <Address> <City>, <State>"
+    # e.g. "Full Time Dr. Heal Pain Cure Hospital, HSR Layout, Bengaluru Bengaluru, Karnataka"
+    # e.g. "Full Time Skyward, Brookefield, Bengaluru Bengaluru, Karnataka"
+    # e.g. "Full Time Medifit Solutions Dombivli, Maharashtra Posted"
+    # Capture everything after "Full Time" up to first comma or known city
+    match = re.search(r'(?:Full Time|Full-Time|Part Time|Part-Time)\s+(.+?)(?:,\s*|\s+(?:Bengaluru|Bangalore|Hyderabad|Delhi|Mumbai|Pune|Chennai|Kolkata|Lucknow|Jaipur|Gurgaon|Noida|Remote|Kadur|Salem|Dombivli))', text)
+    if match:
+        return match.group(1).strip()
+    
     # Fallback: look for ALL CAPS hospital names
     match = re.search(r'([A-Z][A-Z\s]+(?:HOSPITAL|CLINIC|CENTRE|CENTER|INSTITUTE|FOUNDATION|LTD|LIMITED|PVT|PRIVATE))', text)
     if match:
