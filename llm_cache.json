@@ -1,0 +1,27 @@
+{
+  "a04ee2a476e7a4d3c76f0a2e": {
+    "facility_name": "",
+    "facility_type": "",
+    "city": "Bangalore",
+    "area": "HSR Layout",
+    "address": "",
+    "phone": "",
+    "email": "hr@apolloclinic.com",
+    "contact_name": "",
+    "role": "Rmo",
+    "department": "",
+    "salary_text": "₹60,000",
+    "hiring_type": "",
+    "shift_type": "night",
+    "experience_required": "",
+    "is_urgent": true,
+    "offers_accommodation": true,
+    "key_signals": [
+      "Urgent or immediate joining",
+      "Doctor coverage requirement",
+      "Shift coverage pressure",
+      "Hard-to-fill role incentive"
+    ],
+    "summary": ""
+  }
+}
